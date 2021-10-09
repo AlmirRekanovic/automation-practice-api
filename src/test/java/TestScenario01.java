@@ -1,40 +1,35 @@
-import io.restassured.http.ContentType;
-import io.restassured.path.json.JsonPath;
-import org.mortbay.util.ajax.JSON;
+import io.restassured.response.Response;
 import org.testng.annotations.Test;
-import java.util.ArrayList;
-import java.util.List;
-
+import java.util.*;
 import static io.restassured.RestAssured.*;
 
 public class TestScenario01 {
+
     @Test
-    void getCarbonForAllRegions() {
-        //Scenario 1 a
-        //Response response = RestAssured.get("https://api.carbonintensity.org.uk/regional").path("data.regions.intensity");
-       // System.out.println(RestAssured.get("https://api.carbonintensity.org.uk/regional").path("data.regions.intensity","data.regions.shortname").toString());
+    void Scenario1(){
 
-        //Scenario 1 b
-//        String forcast = get("https://api.carbonintensity.org.uk/regional").path("data.regions.intensity.forecast").toString();
-//        System.out.println(forcast);
-//
-//        //Scenario 1 c
-        ArrayList<List> interere = get("https://api.carbonintensity.org.uk/regional").path("data.regions.intensity.forecast");
-        ArrayList<List> nesto = given().when().contentType(ContentType.JSON).get("https://api.carbonintensity.org.uk/regional").path("data.regions");
+        Response response = given().when().get("https://api.carbonintensity.org.uk/regional");
 
-        for(List novaLista:nesto){
-           // System.out.println(novaLista.get(0));
-            //System.out.println(nest);
+        List<HashMap<String, Object>> regions = response.path("data[0].regions");
+        HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
+
+        List<Map.Entry<String, Integer>> forecastList = null;
+        for (HashMap<String, Object> o: regions){
+            Response response1 = given()
+                    .with()
+                    .pathParams("regionid", o.get("regionid").toString())
+                    .when()
+                    .get("https://api.carbonintensity.org.uk/regional/regionid/{regionid}");
+
+            hashMap.put(o.get("shortname").toString(),response1.path("data[0].data[0].intensity.forecast"));
+
+            forecastList = new ArrayList<>(hashMap.entrySet());
+
+            forecastList.sort(Collections.reverseOrder(Map.Entry.comparingByValue()));
         }
-//        Response response = get("https://api.carbonintensity.org.uk/regional");
-//        System.out.println(response.asString());
-//        Collections.sort(interere.get(0),Collections.reverseOrder());
-//        System.out.println(interere);
-}}
-//Scenario 1:
-//        1. Get carbon intensity for each region
-//        2. Get intensity value forecast
-//        3. Sort regions for highest to lowest intensity
-//        4. Print sorted list in the logs starting with value followed by short name of the region
 
-//
+        for(var o: forecastList){
+            System.out.println(o.toString());
+        }
+    }
+}
